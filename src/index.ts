@@ -5,6 +5,7 @@ import './index.css';
 
 import { IconText } from '@codexteam/icons';
 import makeFragment from './utils/makeFragment';
+import cleanWordHTML, { isWordHTML } from './utils/cleanWordHTML';
 
 import { IconAlignLeft, IconAlignCenter, IconAlignRight, IconAlignJustify } from '@codexteam/icons';
 
@@ -397,11 +398,26 @@ export default class Paragraph {
   /**
    * On paste callback fired from Editor.
    *
+   * Handles pasted content with special processing for Microsoft Word HTML.
+   * Word documents contain proprietary tags and formatting that can break
+   * LaTeX compilation, so we clean them before insertion.
+   *
    * @param {HTMLPasteEvent} event - event with pasted data
    */
   public onPaste(event: HTMLPasteEvent): void {
+    let htmlContent = event.detail.data.innerHTML;
+
+    /**
+     * Detect and clean Microsoft Word HTML
+     * Word pastes contain Office-specific tags like <o:p>, <w:sdt>, etc.
+     * These need to be stripped to prevent LaTeX compilation errors.
+     */
+    if (isWordHTML(htmlContent)) {
+      htmlContent = cleanWordHTML(htmlContent);
+    }
+
     const data = {
-      text: event.detail.data.innerHTML,
+      text: htmlContent,
       alignment: this.stringToAlignmentEnum(event.detail.data.style.textAlign) || Paragraph.DEFAULT_ALIGNMENT
     };
 

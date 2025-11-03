@@ -1,4 +1,6 @@
 import { API, ConversionConfig, HTMLPasteEvent, PasteConfig, SanitizerConfig, ToolConfig, ToolboxConfig } from '@editorjs/editorjs';
+import { ActionConfig } from './types/types';
+import { TunesMenuConfig } from '@editorjs/editorjs/types/tools';
 
 /**
  * Base Paragraph Block for the Editor.js.
@@ -33,6 +35,10 @@ export interface ParagraphData {
      * Paragraph's content
      */
     text: string;
+    /**
+     * Paragraph alignment
+     */
+    alignment: ParagraphAlignmentsEnum;
 }
 /**
  * @typedef {object} ParagraphParams
@@ -60,6 +66,18 @@ interface ParagraphParams {
      */
     readOnly: boolean;
 }
+interface ParagraphAlignments {
+    left: string;
+    center: string;
+    right: string;
+    justify: string;
+}
+declare enum ParagraphAlignmentsEnum {
+    LEFT = "left",
+    CENTER = "center",
+    RIGHT = "right",
+    JUSTIFY = "justify"
+}
 export default class Paragraph {
     /**
      * Default placeholder for Paragraph Tool
@@ -69,9 +87,27 @@ export default class Paragraph {
      */
     static get DEFAULT_PLACEHOLDER(): string;
     /**
+     * Allowed paragraph alignments
+     *
+     * @public
+     * @returns {{left: string, center: string, right: string}}
+    */
+    static get ALIGNMENTS(): ParagraphAlignments;
+    /**
+     * Default paragraph alignment
+     *
+     * @public
+     * @returns {string}
+     */
+    static get DEFAULT_ALIGNMENT(): ParagraphAlignmentsEnum;
+    /**
      * The Editor.js API
      */
     api: API;
+    /**
+     * Paragraph's configuration
+     */
+    config: ParagraphConfig;
     /**
      * Is Paragraph Tool read-only
      */
@@ -150,13 +186,57 @@ export default class Paragraph {
      * @returns {ParagraphData} - saved data
      * @public
      */
-    save(toolsContent: HTMLDivElement): ParagraphData;
+    save(): ParagraphData;
+    /**
+     * Apply visual representation of activated tune
+     * @param tune
+     * @param status
+     */
+    applyTune(tune: ParagraphAlignmentsEnum, status: boolean): void;
+    /**
+     * @returns TunesMenuConfig
+     */
+    renderSettings(): TunesMenuConfig;
     /**
      * On paste callback fired from Editor.
+     *
+     * Handles pasted content with special processing for Microsoft Word HTML.
+     * Word documents contain proprietary tags and formatting that can break
+     * LaTeX compilation, so we clean them before insertion.
      *
      * @param {HTMLPasteEvent} event - event with pasted data
      */
     onPaste(event: HTMLPasteEvent): void;
+    /**
+     * Stores all Tool's data
+     */
+    private set data(value);
+    /**
+     * Get current Tools`s data
+     */
+    private get data();
+    /**
+     * Convert string to @ParagraphAlignmentsEnum
+     * @param value
+     * @returns
+     */
+    private stringToAlignmentEnum;
+    /**
+     * Tune has been toggled
+     * @param tuneName
+     * @returns @void
+     */
+    private tuneToggled;
+    /**
+     * Set one tune
+     * @param tune
+     * @param force - tune state
+     */
+    private setTune;
+    /**
+     * Remove all tunes
+     */
+    private resetTunes;
     /**
      * Enable Conversion Toolbar. Paragraph can be converted to/from other tools
      * @returns {ConversionConfig}
@@ -186,5 +266,9 @@ export default class Paragraph {
      * @returns {ToolboxConfig} - Paragraph Toolbox Setting
      */
     static get toolbox(): ToolboxConfig;
+    /**
+     * Available paragraph tools
+     */
+    static get alignmentTunes(): Array<ActionConfig>;
 }
 export {};
